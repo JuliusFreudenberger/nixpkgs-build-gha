@@ -22,6 +22,11 @@ on:
         description: "Branch to checkout"
         required: true
         type: string
+      build-broken:
+        description: "Also build packages marked as broken"
+        required: true
+        type: boolean
+        default: false
       x86_64-linux:
         description: "Run on x86_64-linux"
         required: true
@@ -104,4 +109,6 @@ jobs:
             . \
             -A ${{ inputs.package }}
             || true
+        env:
+          NIXPKGS_ALLOW_BROKEN: ${{ inputs.build-broken | '1' }}
 
