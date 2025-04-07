@@ -9,7 +9,7 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      pr:
+      package:
         description: "Package to build"
         required: true
         type: string
