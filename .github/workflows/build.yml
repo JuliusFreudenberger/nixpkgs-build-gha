@@ -1,0 +1,97 @@
+name: build
+run-name: "build #${{ inputs.package }}"
+
+permissions: {}
+
+env:
+  PACKAGE: ${{ inputs.package }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Package to build"
+        required: true
+        type: string
+      x86_64-linux:
+        description: "Run on x86_64-linux"
+        required: true
+        type: boolean
+        default: true
+      aarch64-linux:
+        description: "Run on aarch64-linux"
+        required: true
+        type: boolean
+        default: true
+      x86_64-darwin:
+        description: "Run on x86_64-darwin"
+        required: true
+        type: boolean
+        default: true
+      aarch64-darwin:
+        description: "Run on aarch64-darwin"
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  review:
+    strategy:
+      fail-fast: false
+      matrix:
+        system:
+          - x86_64-linux
+          - aarch64-linux
+          - x86_64-darwin
+          - aarch64-darwin
+        exclude:
+          - system: ${{ !inputs.x86_64-linux && 'x86_64-linux' || '' }}
+          - system: ${{ !inputs.aarch64-linux && 'aarch64-linux' || '' }}
+          - system: ${{ !inputs.x86_64-darwin && 'x86_64-darwin' || '' }}
+          - system: ${{ !inputs.aarch64-darwin && 'aarch64-darwin' || '' }}
+    runs-on: >-
+      ${{ (matrix.system == 'x86_64-linux' && 'ubuntu-latest')
+      || (matrix.system == 'aarch64-linux' && 'ubuntu-24.04-arm')
+      || (matrix.system == 'x86_64-darwin' && 'macos-13')
+      || (matrix.system == 'aarch64-darwin' && 'macos-latest') }}
+    outputs:
+      report_x86_64-linux: ${{ steps.report.outputs.report_x86_64-linux }}
+      report_aarch64-linux: ${{ steps.report.outputs.report_aarch64-linux }}
+      report_x86_64-darwin: ${{ steps.report.outputs.report_x86_64-darwin }}
+      report_aarch64-darwin: ${{ steps.report.outputs.report_aarch64-darwin }}
+      fetch_cmd_x86_64-linux: ${{ steps.report.outputs.fetch_cmd_x86_64-linux }}
+      fetch_cmd_aarch64-linux: ${{ steps.report.outputs.fetch_cmd_aarch64-linux }}
+      fetch_cmd_x86_64-darwin: ${{ steps.report.outputs.fetch_cmd_x86_64-darwin }}
+      fetch_cmd_aarch64-darwin: ${{ steps.report.outputs.fetch_cmd_aarch64-darwin }}
+
+    steps:
+      - name: prepare /nix
+        run: sudo mkdir /mnt/nix && sudo mount -m -o bind /mnt/nix /nix
+        if: ${{ matrix.system == 'x86_64-linux' || matrix.system == 'aarch64-linux' }}
+
+      - name: install nix
+        uses: DeterminateSystems/nix-installer-action@v16
+        with:
+          extra-conf: |
+            sandbox = true
+
+      - name: install packages
+        run: |
+          pkgs=(coreutils nixpkgs-review jq)
+          args=()
+          for pkg in ${pkgs[@]}; do args+=("github:nixos/nixpkgs/nixos-unstable#$pkg"); done
+          nix profile install ${args[@]}
+
+      - name: clone nixpkgs
+        uses: actions/checkout@v4
+        with:
+          repository: NixOS/nixpkgs
+          persist-credentials: false
+
+      - name: run nixpkgs-review
+        run: |
+          nix-build \
+            . \
+            -A ${{ inputs.package }}
+            || true
+
