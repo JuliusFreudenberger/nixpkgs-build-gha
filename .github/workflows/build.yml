@@ -13,6 +13,15 @@ on:
         description: "Package to build"
         required: true
         type: string
+      owner:
+        description: "Owner of the nixpkgs repository"
+        required: true
+        type: string
+        default: "NixOS"
+      branch:
+        description: "Branch to checkout"
+        required: true
+        type: string
       x86_64-linux:
         description: "Run on x86_64-linux"
         required: true
@@ -85,7 +94,8 @@ jobs:
       - name: clone nixpkgs
         uses: actions/checkout@v4
         with:
-          repository: NixOS/nixpkgs
+          repository: ${{ inputs.owner }}/nixpkgs
+          ref: ${{ inputs.branch }}
           persist-credentials: false
 
       - name: run nixpkgs-review
