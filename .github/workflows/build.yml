@@ -108,7 +108,6 @@ jobs:
           nix-build \
             . \
             -A ${{ inputs.package }}
-            || true
         env:
-          NIXPKGS_ALLOW_BROKEN: ${{ inputs.build-broken || '1' }}
+          NIXPKGS_ALLOW_BROKEN: ${{ (inputs.build-broken && '1') || '0' }}
 
