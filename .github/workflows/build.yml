@@ -1,5 +1,5 @@
 name: build
-run-name: "build #${{ inputs.package }}"
+run-name: "build ${{ inputs.package }}"
 
 permissions: {}
 
@@ -44,7 +44,7 @@ on:
         default: true
 
 jobs:
-  review:
+  build:
     strategy:
       fail-fast: false
       matrix:
@@ -86,7 +86,7 @@ jobs:
 
       - name: install packages
         run: |
-          pkgs=(coreutils nixpkgs-review jq)
+          pkgs=(coreutils jq)
           args=()
           for pkg in ${pkgs[@]}; do args+=("github:nixos/nixpkgs/nixos-unstable#$pkg"); done
           nix profile install ${args[@]}
@@ -98,7 +98,7 @@ jobs:
           ref: ${{ inputs.branch }}
           persist-credentials: false
 
-      - name: run nixpkgs-review
+      - name: run nix-build
         run: |
           nix-build \
             . \
