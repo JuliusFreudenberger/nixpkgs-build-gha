@@ -27,6 +27,11 @@ on:
         required: true
         type: boolean
         default: false
+      unsupported-system:
+        description: "Also build packages even if system is unsupported"
+        required: true
+        type: boolean
+        default: false
       x86_64-linux:
         description: "Run on x86_64-linux"
         required: true
@@ -110,4 +115,5 @@ jobs:
             -A ${{ inputs.package }}
         env:
           NIXPKGS_ALLOW_BROKEN: ${{ (inputs.build-broken && '1') || '0' }}
+          NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM: ${{ (inputs.unsupported-system && '1') || '0' }}
 
